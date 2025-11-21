@@ -298,6 +298,18 @@ def check_params(req: dict):
 
 
 async def tts_handle(req: dict):
+
+    # === 环境变量注入 (Environment Variable Injection) ===
+    if not req.get("ref_audio_path"):
+        import os
+        # 检查环境变量是否存在
+        if os.environ.get("GS_REF_AUDIO"):
+            print("⚠️ [自动补全] 检测到参数缺失，使用环境变量配置...")
+            req["ref_audio_path"] = os.environ.get("GS_REF_AUDIO")
+            req["prompt_text"] = os.environ.get("GS_PROMPT_TEXT")
+            req["prompt_lang"] = os.environ.get("GS_PROMPT_LANG")
+    # ===================================================
+
     """
     Text to speech handler.
 
@@ -405,6 +417,16 @@ async def tts_get_endpoint(
     sample_steps: int = 32,
     super_sampling: bool = False,
 ):
+
+    # === 环境变量注入 (Environment Variable Injection) ===
+    if not ref_audio_path:
+        import os
+        if os.environ.get("GS_REF_AUDIO"):
+            print(f"⚠️ [GET请求] 使用环境变量自动填充...")
+            ref_audio_path = os.environ.get("GS_REF_AUDIO")
+            prompt_text = os.environ.get("GS_PROMPT_TEXT")
+            prompt_lang = os.environ.get("GS_PROMPT_LANG")
+    # ===================================================
     req = {
         "text": text,
         "text_lang": text_lang.lower(),
