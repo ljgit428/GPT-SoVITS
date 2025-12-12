@@ -379,6 +379,20 @@ async def tts_handle(req: dict):
 
         else:
             sr, audio_data = next(tts_generator)
+
+            try:
+                non_silent_indices = np.where(np.abs(audio_data) > 0.001)[0]
+                
+                if len(non_silent_indices) > 0:
+                    last_sound_index = non_silent_indices[-1]
+                    
+                    buffer_length = int(sr * 0.1) 
+                    cut_index = min(last_sound_index + buffer_length, len(audio_data))
+                    
+                    audio_data = audio_data[:cut_index]
+            except Exception as e:
+                print(f"Silence trimming failed: {e}")
+            
             audio_data = pack_audio(BytesIO(), audio_data, sr, media_type).getvalue()
             return Response(audio_data, media_type=f"audio/{media_type}")
     except Exception as e:
